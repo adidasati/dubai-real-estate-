@@ -1,0 +1,838 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dubai Real Estate Pulse - Market Intelligence Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Crimson+Pro:wght@300;400;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --gold: #D4AF37;
+            --gold-dark: #B8941D;
+            --navy: #0A1929;
+            --navy-light: #1A2F42;
+            --sand: #F5F0E8;
+            --sand-dark: #E8DFD0;
+            --terracotta: #C67B5C;
+            --mint: #8FBEAA;
+            --shadow: rgba(10, 25, 41, 0.15);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Crimson Pro', serif;
+            background: linear-gradient(135deg, var(--sand) 0%, var(--sand-dark) 100%);
+            color: var(--navy);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* Background Pattern */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: 
+                repeating-linear-gradient(90deg, 
+                    transparent, 
+                    transparent 2px, 
+                    rgba(212, 175, 55, 0.02) 2px, 
+                    rgba(212, 175, 55, 0.02) 4px);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 40px 60px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Header */
+        header {
+            text-align: center;
+            margin-bottom: 60px;
+            padding: 60px 0;
+            background: linear-gradient(180deg, rgba(255,255,255,0.6) 0%, transparent 100%);
+            border-radius: 8px;
+            animation: fadeIn 1s ease-out;
+        }
+
+        .logo {
+            font-family: 'Playfair Display', serif;
+            font-size: 3.5rem;
+            font-weight: 700;
+            color: var(--navy);
+            margin-bottom: 10px;
+            letter-spacing: -1px;
+            text-shadow: 2px 2px 0 rgba(212, 175, 55, 0.1);
+        }
+
+        .subtitle {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.9rem;
+            color: var(--gold-dark);
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            font-weight: 500;
+        }
+
+        .live-badge {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 8px 20px;
+            background: var(--gold);
+            color: white;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.75rem;
+            border-radius: 20px;
+            animation: pulse 2s infinite;
+            box-shadow: 0 4px 15px rgba(212, 175, 55, 0.4);
+        }
+
+        .live-badge::before {
+            content: '●';
+            color: white;
+            margin-right: 8px;
+            animation: blink 1.5s infinite;
+        }
+
+        /* Market Status Card */
+        .market-status {
+            background: white;
+            border-radius: 12px;
+            padding: 50px;
+            margin-bottom: 40px;
+            box-shadow: 
+                0 20px 60px var(--shadow),
+                inset 0 0 0 1px rgba(212, 175, 55, 0.2);
+            position: relative;
+            overflow: hidden;
+            animation: slideUp 0.8s ease-out 0.2s both;
+        }
+
+        .market-status::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, var(--gold), var(--terracotta), var(--mint));
+        }
+
+        .market-health {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 30px;
+        }
+
+        .health-score {
+            flex: 1;
+            min-width: 250px;
+        }
+
+        .health-label {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.85rem;
+            color: var(--gold-dark);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 15px;
+        }
+
+        .score-value {
+            font-family: 'Playfair Display', serif;
+            font-size: 5rem;
+            font-weight: 700;
+            color: var(--gold);
+            line-height: 1;
+            text-shadow: 2px 2px 0 rgba(10, 25, 41, 0.05);
+        }
+
+        .score-max {
+            font-size: 2rem;
+            color: var(--navy-light);
+            opacity: 0.5;
+        }
+
+        .health-description {
+            font-size: 1.1rem;
+            color: var(--navy-light);
+            margin-top: 15px;
+        }
+
+        .health-trend {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 10px;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.9rem;
+        }
+
+        .trend-up {
+            color: var(--mint);
+        }
+
+        .trend-down {
+            color: var(--terracotta);
+        }
+
+        /* Indicators Grid */
+        .indicators-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .indicator-card {
+            background: white;
+            border-radius: 12px;
+            padding: 35px;
+            box-shadow: 0 10px 40px var(--shadow);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            animation: slideUp 0.8s ease-out both;
+        }
+
+        .indicator-card:nth-child(1) { animation-delay: 0.3s; }
+        .indicator-card:nth-child(2) { animation-delay: 0.4s; }
+        .indicator-card:nth-child(3) { animation-delay: 0.5s; }
+        .indicator-card:nth-child(4) { animation-delay: 0.6s; }
+        .indicator-card:nth-child(5) { animation-delay: 0.7s; }
+        .indicator-card:nth-child(6) { animation-delay: 0.8s; }
+        .indicator-card:nth-child(7) { animation-delay: 0.9s; }
+
+        .indicator-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: var(--gold);
+            transform: scaleY(0);
+            transform-origin: top;
+            transition: transform 0.4s ease;
+        }
+
+        .indicator-card:hover::before {
+            transform: scaleY(1);
+        }
+
+        .indicator-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 60px var(--shadow);
+        }
+
+        .indicator-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 20px;
+        }
+
+        .indicator-icon {
+            font-size: 2rem;
+            filter: grayscale(30%);
+        }
+
+        .indicator-status {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.7rem;
+            padding: 4px 12px;
+            border-radius: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .status-live {
+            background: rgba(143, 190, 170, 0.2);
+            color: var(--mint);
+        }
+
+        .indicator-title {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--navy-light);
+            margin-bottom: 10px;
+        }
+
+        .indicator-value {
+            font-family: 'Playfair Display', serif;
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--navy);
+            margin-bottom: 10px;
+            line-height: 1;
+        }
+
+        .indicator-change {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.85rem;
+            margin-bottom: 15px;
+        }
+
+        .change-positive {
+            color: var(--mint);
+        }
+
+        .change-negative {
+            color: var(--terracotta);
+        }
+
+        .indicator-description {
+            font-size: 0.95rem;
+            color: var(--navy-light);
+            opacity: 0.8;
+            line-height: 1.5;
+        }
+
+        /* Chart Section */
+        .chart-section {
+            background: white;
+            border-radius: 12px;
+            padding: 40px;
+            margin-bottom: 40px;
+            box-shadow: 0 10px 40px var(--shadow);
+            animation: slideUp 0.8s ease-out 1s both;
+        }
+
+        .chart-header {
+            margin-bottom: 30px;
+        }
+
+        .chart-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 2rem;
+            color: var(--navy);
+            margin-bottom: 10px;
+        }
+
+        .chart-subtitle {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.85rem;
+            color: var(--navy-light);
+            opacity: 0.7;
+        }
+
+        canvas {
+            max-height: 400px;
+        }
+
+        /* News Feed */
+        .news-feed {
+            background: white;
+            border-radius: 12px;
+            padding: 40px;
+            box-shadow: 0 10px 40px var(--shadow);
+            animation: slideUp 0.8s ease-out 1.1s both;
+        }
+
+        .feed-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid var(--sand);
+        }
+
+        .feed-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 2rem;
+            color: var(--navy);
+        }
+
+        .news-item {
+            padding: 25px 0;
+            border-bottom: 1px solid var(--sand);
+            transition: background 0.3s ease;
+        }
+
+        .news-item:hover {
+            background: var(--sand);
+            margin: 0 -20px;
+            padding: 25px 20px;
+            border-radius: 8px;
+        }
+
+        .news-time {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.75rem;
+            color: var(--gold-dark);
+            margin-bottom: 8px;
+        }
+
+        .news-headline {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--navy);
+            margin-bottom: 8px;
+        }
+
+        .news-source {
+            font-size: 0.85rem;
+            color: var(--navy-light);
+            opacity: 0.7;
+        }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 40px 0;
+            margin-top: 60px;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.85rem;
+            color: var(--navy-light);
+            opacity: 0.6;
+        }
+
+        .update-info {
+            margin-bottom: 15px;
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.05);
+            }
+        }
+
+        @keyframes blink {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.3;
+            }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px 30px;
+            }
+
+            .logo {
+                font-size: 2.5rem;
+            }
+
+            .market-status {
+                padding: 30px;
+            }
+
+            .score-value {
+                font-size: 3.5rem;
+            }
+
+            .indicator-value {
+                font-size: 2rem;
+            }
+
+            .indicators-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">Dubai Real Estate Pulse</div>
+            <div class="subtitle">Market Intelligence Dashboard</div>
+            <div class="live-badge">Live Market Data</div>
+        </header>
+
+        <!-- Market Status -->
+        <div class="market-status">
+            <div class="market-health">
+                <div class="health-score">
+                    <div class="health-label">Market Health Index</div>
+                    <div class="score-value">
+                        <span id="healthScore">87</span><span class="score-max">/100</span>
+                    </div>
+                    <div class="health-description">Strong bullish momentum with high investor confidence</div>
+                    <div class="health-trend trend-up">
+                        ↗ <span id="trendValue">+5.2%</span> from last quarter
+                    </div>
+                </div>
+                <div style="flex: 1; min-width: 300px;">
+                    <canvas id="healthChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Indicators Grid -->
+        <div class="indicators-grid">
+            <!-- Price Index -->
+            <div class="indicator-card">
+                <div class="indicator-header">
+                    <div class="indicator-icon">📊</div>
+                    <div class="indicator-status status-live">LIVE</div>
+                </div>
+                <div class="indicator-title">Average Price per Sq.Ft</div>
+                <div class="indicator-value" id="priceIndex">AED 1,600</div>
+                <div class="indicator-change change-positive">
+                    ↗ <span id="priceChange">+20%</span> YoY
+                </div>
+                <div class="indicator-description">
+                    Steady appreciation across all segments driven by high demand
+                </div>
+            </div>
+
+            <!-- Transaction Volume -->
+            <div class="indicator-card">
+                <div class="indicator-header">
+                    <div class="indicator-icon">📈</div>
+                    <div class="indicator-status status-live">LIVE</div>
+                </div>
+                <div class="indicator-title">Monthly Transactions</div>
+                <div class="indicator-value" id="transactionVolume">18,450</div>
+                <div class="indicator-change change-positive">
+                    ↗ <span id="volumeChange">+23%</span> MoM
+                </div>
+                <div class="indicator-description">
+                    Record-breaking activity in both ready and off-plan segments
+                </div>
+            </div>
+
+            <!-- Off-Plan Supply -->
+            <div class="indicator-card">
+                <div class="indicator-header">
+                    <div class="indicator-icon">🏢</div>
+                    <div class="indicator-status status-live">LIVE</div>
+                </div>
+                <div class="indicator-title">Off-Plan Pipeline</div>
+                <div class="indicator-value" id="offPlanSupply">76,000</div>
+                <div class="indicator-change change-positive">
+                    ↗ <span id="supplyChange">Units completing in 2025</span>
+                </div>
+                <div class="indicator-description">
+                    Strong supply meets robust demand from investors and end-users
+                </div>
+            </div>
+
+            <!-- Rental Yield -->
+            <div class="indicator-card">
+                <div class="indicator-header">
+                    <div class="indicator-icon">💰</div>
+                    <div class="indicator-status status-live">LIVE</div>
+                </div>
+                <div class="indicator-title">Average Rental Yield</div>
+                <div class="indicator-value" id="rentalYield">7.0%</div>
+                <div class="indicator-change change-positive">
+                    ↗ <span id="yieldChange">Top global performer</span>
+                </div>
+                <div class="indicator-description">
+                    Highest yields among major global cities, attracting investors
+                </div>
+            </div>
+
+            <!-- News Sentiment -->
+            <div class="indicator-card">
+                <div class="indicator-header">
+                    <div class="indicator-icon">📰</div>
+                    <div class="indicator-status status-live">LIVE</div>
+                </div>
+                <div class="indicator-title">Market Sentiment</div>
+                <div class="indicator-value" id="sentiment">Bullish</div>
+                <div class="indicator-change change-positive">
+                    ↗ <span id="sentimentScore">85/100</span> Confidence
+                </div>
+                <div class="indicator-description">
+                    Positive news coverage and analyst forecasts for 2025
+                </div>
+            </div>
+
+            <!-- Search Interest -->
+            <div class="indicator-card">
+                <div class="indicator-header">
+                    <div class="indicator-icon">🔍</div>
+                    <div class="indicator-status status-live">LIVE</div>
+                </div>
+                <div class="indicator-title">Search Interest</div>
+                <div class="indicator-value" id="searchInterest">High</div>
+                <div class="indicator-change change-positive">
+                    ↗ <span id="searchChange">+32%</span> vs last year
+                </div>
+                <div class="indicator-description">
+                    Growing global interest in Dubai property investments
+                </div>
+            </div>
+
+            <!-- Foreign Investment -->
+            <div class="indicator-card">
+                <div class="indicator-header">
+                    <div class="indicator-icon">🌍</div>
+                    <div class="indicator-status status-live">LIVE</div>
+                </div>
+                <div class="indicator-title">Foreign Investment</div>
+                <div class="indicator-value" id="foreignInvestment">68%</div>
+                <div class="indicator-change change-positive">
+                    ↗ <span id="foreignChange">Of total transactions</span>
+                </div>
+                <div class="indicator-description">
+                    Strong international capital flows from MENA, Asia, and Europe
+                </div>
+            </div>
+        </div>
+
+        <!-- Chart Section -->
+        <div class="chart-section">
+            <div class="chart-header">
+                <div class="chart-title">Price Trends: 12-Month Overview</div>
+                <div class="chart-subtitle">Average price per square foot across all property types</div>
+            </div>
+            <canvas id="priceChart"></canvas>
+        </div>
+
+        <!-- News Feed -->
+        <div class="news-feed">
+            <div class="feed-header">
+                <div class="feed-title">Latest Market Intelligence</div>
+            </div>
+            <div id="newsFeed">
+                <div class="news-item">
+                    <div class="news-time">2 hours ago</div>
+                    <div class="news-headline">Q2 2025 marks highest quarterly performance in Dubai real estate history</div>
+                    <div class="news-source">Property Finder Group</div>
+                </div>
+                <div class="news-item">
+                    <div class="news-time">5 hours ago</div>
+                    <div class="news-headline">Villa prices surge 29% year-on-year, outperforming apartments</div>
+                    <div class="news-source">ValuStrat Price Index</div>
+                </div>
+                <div class="news-item">
+                    <div class="news-time">8 hours ago</div>
+                    <div class="news-headline">DIFC launches real-time property data API for market transparency</div>
+                    <div class="news-source">Dubai Chronicle</div>
+                </div>
+                <div class="news-item">
+                    <div class="news-time">1 day ago</div>
+                    <div class="news-headline">Dubai population exceeds 3.8 million, reinforcing housing demand</div>
+                    <div class="news-source">Deloitte Middle East</div>
+                </div>
+                <div class="news-item">
+                    <div class="news-time">1 day ago</div>
+                    <div class="news-headline">First-Time Home Buyer Program launched to support ownership transition</div>
+                    <div class="news-source">Dubai Land Department</div>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <div class="update-info">
+                Last updated: <span id="lastUpdate">Just now</span> • Next update in <span id="nextUpdate">30 minutes</span>
+            </div>
+            <div>
+                Data sources: Dubai Land Department, Dubai Pulse, Property Finder, Bayut, Market Analytics
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        // Health Score Mini Chart
+        const healthCtx = document.getElementById('healthChart').getContext('2d');
+        const healthChart = new Chart(healthCtx, {
+            type: 'line',
+            data: {
+                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                datasets: [{
+                    label: 'Health Score',
+                    data: [78, 80, 82, 84, 85, 87],
+                    borderColor: '#D4AF37',
+                    backgroundColor: 'rgba(212, 175, 55, 0.1)',
+                    tension: 0.4,
+                    fill: true,
+                    pointRadius: 0,
+                    borderWidth: 3
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        display: false,
+                        min: 70,
+                        max: 100
+                    },
+                    x: {
+                        display: false
+                    }
+                }
+            }
+        });
+
+        // Price Trends Chart
+        const priceCtx = document.getElementById('priceChart').getContext('2d');
+        const priceChart = new Chart(priceCtx, {
+            type: 'line',
+            data: {
+                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+                datasets: [
+                    {
+                        label: 'Villas',
+                        data: [1820, 1850, 1880, 1920, 1970, 2020, 2080, 2140, 2200, 2260, 2320, 2350],
+                        borderColor: '#D4AF37',
+                        backgroundColor: 'rgba(212, 175, 55, 0.1)',
+                        tension: 0.4,
+                        fill: true,
+                        borderWidth: 3
+                    },
+                    {
+                        label: 'Apartments',
+                        data: [1320, 1340, 1360, 1385, 1410, 1440, 1470, 1500, 1530, 1560, 1585, 1600],
+                        borderColor: '#8FBEAA',
+                        backgroundColor: 'rgba(143, 190, 170, 0.1)',
+                        tension: 0.4,
+                        fill: true,
+                        borderWidth: 3
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top',
+                        labels: {
+                            font: {
+                                family: "'IBM Plex Mono', monospace",
+                                size: 12
+                            },
+                            usePointStyle: true,
+                            padding: 20
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(10, 25, 41, 0.95)',
+                        titleFont: {
+                            family: "'IBM Plex Mono', monospace"
+                        },
+                        bodyFont: {
+                            family: "'Crimson Pro', serif",
+                            size: 14
+                        },
+                        padding: 15,
+                        displayColors: true,
+                        callbacks: {
+                            label: function(context) {
+                                return context.dataset.label + ': AED ' + context.parsed.y + '/sq.ft';
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: false,
+                        grid: {
+                            color: 'rgba(10, 25, 41, 0.05)'
+                        },
+                        ticks: {
+                            font: {
+                                family: "'IBM Plex Mono', monospace",
+                                size: 11
+                            },
+                            callback: function(value) {
+                                return 'AED ' + value;
+                            }
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        },
+                        ticks: {
+                            font: {
+                                family: "'IBM Plex Mono', monospace",
+                                size: 11
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // Update timestamp
+        function updateTimestamp() {
+            const now = new Date();
+            document.getElementById('lastUpdate').textContent = now.toLocaleTimeString('en-US', {
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        updateTimestamp();
+        setInterval(updateTimestamp, 60000); // Update every minute
+
+        // Simulate data updates (in production, this would fetch from APIs)
+        function simulateDataUpdate() {
+            // Add subtle animations to values
+            const elements = document.querySelectorAll('.indicator-value, .score-value');
+            elements.forEach(el => {
+                el.style.transition = 'all 0.3s ease';
+                el.style.transform = 'scale(1.05)';
+                setTimeout(() => {
+                    el.style.transform = 'scale(1)';
+                }, 300);
+            });
+        }
+
+        // Simulate updates every 30 seconds
+        setInterval(simulateDataUpdate, 30000);
+    </script>
+</body>
+</html>
