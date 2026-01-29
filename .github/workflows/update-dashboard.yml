@@ -1,0 +1,24 @@
+name: Update Dashboard
+
+on:
+  schedule:
+    - cron: '0 * * * *'  # Every hour
+  workflow_dispatch:
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      
+      - name: Update timestamp
+        run: node update-simple.js
+      
+      - name: Commit changes
+        run: |
+          git config user.name 'Dashboard Bot'
+          git config user.email 'bot@dashboard.com'
+          git add index.html
+          git diff --quiet && git diff --staged --quiet || (git commit -m "🔄 Update: $(date +'%b %d, %H:%M')" && git push)
