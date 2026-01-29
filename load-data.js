@@ -4,7 +4,8 @@
 // WITHOUT modifying the HTML file itself!
 // ============================================
 
-(function() {
+// ✅ FIXED: Wrap in DOMContentLoaded to ensure DOM is ready
+document.addEventListener('DOMContentLoaded', function() {
     console.log('📊 Loading market data...');
     
     // Fetch the JSON data
@@ -72,4 +73,4 @@
             console.log('⚠️ Could not load data.json, using static values');
             console.error(error);
         });
-})();
+});
