@@ -1,7 +1,7 @@
 {
   "market_health_score": 95,
   "avg_price_sqft": 1600,
-  "monthly_transactions": 18011,
+  "monthly_transactions": 18002,
   "pipeline_units": 76000,
   "avg_yield": 7,
   "sentiment_score": 85,
@@ -16,7 +16,7 @@
   "bay_price": 1520000,
   "bay_yield": "7.2",
   "bay_roi": "12.3",
-  "last_updated": "2026-06-16T04:00:57.776Z",
+  "last_updated": "2026-06-17T04:01:48.762Z",
   "sources": {
     "bayut": "scraped",
     "propertyfinder": "scraped",
